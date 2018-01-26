@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <title>Document</title>
+</head>
+<body>
+    <div id='drop-area'>
+        <form class="my-form">
+            <p>Upload multiple files with the file dialog or by dragging and dropping images onto the dashed region</p>
+            <input type="file" id="file-element" multiple accept="image/*" onchange="handleFiles(this.files)" />
+            <label class="button" for="file-element">Select some files</label>
+        </form>
+    </div>
+    <progress id="progress-bar" value=0 max=100></progress>
+
+    <script>
+        // target elements
+        let dropArea = document.getElementById('drop-area')
+        let fileInput = document.getElementById('file-element')
+        let progressBar = document.getElementById('progress-bar')
+
+        let events = ['dragenter', 'dragover', 'dragleave', 'drop']
+        let dragOverEvents = ['dragenter', 'dragover']
+        let dragLeaveEvents = ['dragleave', 'drop']
+
+        let filesDone = 0
+        let filesToDo = 0
+
+        function initializeProgress(numOfFiles) {
+            progressBar.value = 0 
+            filesDone = 0 
+            filesToDo = 0
+        }
+
+        function progressDone(res) {
+            filesDone++ 
+            console.log('returned: ', res.data)
+            // progressBar.value = filesDone / filesToDo * 100
+        }
+
+        // add listeners for all drag-over events 
+        events.forEach(eName => {
+            dropArea.addEventListener(eName, preventDefaults, false)
+        })
+
+        dragOverEvents.forEach(eName => {
+            dropArea.addEventListener(eName, highlight, false)
+        })
+
+        dragLeaveEvents.forEach(eName => {
+            dropArea.addEventListener(eName, unhighlight, false)
+        })
+
+        dropArea.addEventListener('drop', handleDrop, false)
+
+        function preventDefaults(e) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
+        function highlight(e) {
+            dropArea.classList.add('highlight')
+        }
+
+        function unhighlight(e) {
+            dropArea.classList.remove('highlight')
+        }
+
+        function handleDrop(e) {
+            // access files from drop event
+            let data = e.dataTransfer
+            let files = data.files
+
+            // same functionality as clicking on the add files button
+            handleFiles(files)
+        }
+
+        function handleFiles([...files]) {
+            // initializeProgress(files.length)
+            files.forEach(uploadFile)
+        }
+
+        function uploadFile(file) {
+            let url = 'http://localhost:3005/api/fileupload'
+            let formData = new FormData()
+
+            formData.append('testytest', 'this is a test')
+            formData.append('file', file)
+            
+            console.log(formData.entries());
+            console.log("file: ", file);
+
+            fetch(url, {
+                method: 'post',
+                body: file
+            }).then(res=>res.json())
+            .then(progressDone)
+        }
+    </script>
+</body>
+</html>
